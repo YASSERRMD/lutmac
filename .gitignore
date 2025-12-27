@@ -1,0 +1,47 @@
+# Build directory
+build/
+cmake-build-*/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+# OS
+.DS_Store
+Thumbs.db
+
+# Models & Data
+models/
+*.lutmac
+*.safetensors
+*.bin
+
+# Internal Tools (Unwanted)
+tools/
+merge_shards.py
+
+# Logs & Temporary
+*.log
+debug.log
+.DS_Store
+
+# IDE / Build / Language Server
+build/
+.cache/
+.vscode/
+.idea/
+cmake-build-*/
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Compiled
+*.o
+*.a
+
+# Editor backups
+*.bak
+*.orig
