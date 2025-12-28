@@ -273,6 +273,38 @@ inline void int3_gemv(const Int3Block *blocks, size_t num_blocks,
 }
 
 /**
+ * Int5 GEMV kernel (scalar)
+ */
+void int5_gemv_scalar(const Int5Block *blocks, size_t num_blocks,
+                      const float *activations, float *output, size_t M,
+                      size_t K);
+
+/**
+ * Int5 GEMV dispatcher
+ */
+inline void int5_gemv(const Int5Block *blocks, size_t num_blocks,
+                      const float *activations, float *output, size_t M,
+                      size_t K) {
+  int5_gemv_scalar(blocks, num_blocks, activations, output, M, K);
+}
+
+/**
+ * Int6 GEMV kernel (scalar)
+ */
+void int6_gemv_scalar(const Int6Block *blocks, size_t num_blocks,
+                      const float *activations, float *output, size_t M,
+                      size_t K);
+
+/**
+ * Int6 GEMV dispatcher
+ */
+inline void int6_gemv(const Int6Block *blocks, size_t num_blocks,
+                      const float *activations, float *output, size_t M,
+                      size_t K) {
+  int6_gemv_scalar(blocks, num_blocks, activations, output, M, K);
+}
+
+/**
  * Int8 GEMV kernel (scalar)
  */
 void int8_gemv_scalar(const Int8Block *blocks, size_t num_blocks,

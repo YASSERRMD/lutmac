@@ -18,8 +18,7 @@ models/
 *.safetensors
 *.bin
 
-# Internal Tools (Unwanted)
-tools/
+# Internal Scripts (Unwanted)
 merge_shards.py
 
 # Logs & Temporary

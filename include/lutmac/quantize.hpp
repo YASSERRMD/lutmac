@@ -496,6 +496,222 @@ inline PackedTensor quantize_tensor_int4(const float *data,
 
 /**
  * ============================================================================
+ * 5-Bit Quantization
+ * ============================================================================
+ *
+ * Quantize tensor to 5-bit symmetric format
+ * Range: values mapped to [-16, +15] * scale
+ */
+inline PackedTensor quantize_tensor_int5(const float *data,
+                                         const std::vector<size_t> &shape,
+                                         const std::string &name = "") {
+  PackedTensor result;
+  result.name = name;
+  result.shape = shape;
+  result.is_quantized = true;
+  result.quant_bits = 5;
+
+  size_t n = 1;
+  for (auto s : shape)
+    n *= s;
+
+  size_t padded_n = n;
+  size_t blocks_per_row = 0;
+
+  if (shape.size() == 2) {
+    size_t M = shape[0];
+    size_t K = shape[1];
+    size_t blocks_k = div_ceil(K, Int5Block::BLOCK_SIZE);
+    blocks_per_row = blocks_k;
+    padded_n = M * (blocks_k * Int5Block::BLOCK_SIZE);
+  } else {
+    size_t blocks_n = div_ceil(n, Int5Block::BLOCK_SIZE);
+    padded_n = blocks_n * Int5Block::BLOCK_SIZE;
+    blocks_per_row = blocks_n;
+  }
+
+  size_t num_blocks = padded_n / Int5Block::BLOCK_SIZE;
+  result.int5_blocks.resize(num_blocks);
+
+  if (shape.size() == 2) {
+    size_t M = shape[0];
+    size_t K = shape[1];
+
+    for (size_t r = 0; r < M; ++r) {
+      size_t row_offset = r * K;
+      size_t block_offset = r * blocks_per_row;
+
+      for (size_t b = 0; b < blocks_per_row; ++b) {
+        Int5Block &block = result.int5_blocks[block_offset + b];
+        std::memset(&block, 0, sizeof(Int5Block));
+
+        size_t start_col = b * Int5Block::BLOCK_SIZE;
+        size_t valid_len = 0;
+        if (start_col < K) {
+          valid_len = std::min(Int5Block::BLOCK_SIZE, K - start_col);
+        }
+
+        float absmax = 0.0f;
+        for (size_t i = 0; i < valid_len; ++i) {
+          absmax = std::max(absmax, std::abs(data[row_offset + start_col + i]));
+        }
+
+        block.scale = absmax / 15.0f;
+        float inv_scale = (block.scale > 1e-10f) ? (1.0f / block.scale) : 0.0f;
+
+        for (size_t i = 0; i < Int5Block::BLOCK_SIZE; ++i) {
+          float val = 0.0f;
+          if (i < valid_len) {
+            val = data[row_offset + start_col + i];
+          }
+          int q = static_cast<int>(std::round(val * inv_scale));
+          q = std::max(-15, std::min(15, q));
+          uint8_t uq = static_cast<uint8_t>(q + 16);
+          block.set(i, uq);
+        }
+      }
+    }
+  } else {
+    for (size_t b = 0; b < num_blocks; ++b) {
+      Int5Block &block = result.int5_blocks[b];
+      std::memset(&block, 0, sizeof(Int5Block));
+
+      size_t start_idx = b * Int5Block::BLOCK_SIZE;
+      size_t valid_len = std::min(Int5Block::BLOCK_SIZE, n - start_idx);
+      if (start_idx >= n)
+        valid_len = 0;
+
+      float absmax = 0.0f;
+      for (size_t i = 0; i < valid_len; ++i) {
+        absmax = std::max(absmax, std::abs(data[start_idx + i]));
+      }
+
+      block.scale = absmax / 15.0f;
+      float inv_scale = (block.scale > 1e-10f) ? (1.0f / block.scale) : 0.0f;
+
+      for (size_t i = 0; i < Int5Block::BLOCK_SIZE; ++i) {
+        float val = (i < valid_len) ? data[start_idx + i] : 0.0f;
+        int q = static_cast<int>(std::round(val * inv_scale));
+        q = std::max(-15, std::min(15, q));
+        uint8_t uq = static_cast<uint8_t>(q + 16);
+        block.set(i, uq);
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * ============================================================================
+ * 6-Bit Quantization
+ * ============================================================================
+ *
+ * Quantize tensor to 6-bit symmetric format
+ * Range: values mapped to [-32, +31] * scale
+ */
+inline PackedTensor quantize_tensor_int6(const float *data,
+                                         const std::vector<size_t> &shape,
+                                         const std::string &name = "") {
+  PackedTensor result;
+  result.name = name;
+  result.shape = shape;
+  result.is_quantized = true;
+  result.quant_bits = 6;
+
+  size_t n = 1;
+  for (auto s : shape)
+    n *= s;
+
+  size_t padded_n = n;
+  size_t blocks_per_row = 0;
+
+  if (shape.size() == 2) {
+    size_t M = shape[0];
+    size_t K = shape[1];
+    size_t blocks_k = div_ceil(K, Int6Block::BLOCK_SIZE);
+    blocks_per_row = blocks_k;
+    padded_n = M * (blocks_k * Int6Block::BLOCK_SIZE);
+  } else {
+    size_t blocks_n = div_ceil(n, Int6Block::BLOCK_SIZE);
+    padded_n = blocks_n * Int6Block::BLOCK_SIZE;
+    blocks_per_row = blocks_n;
+  }
+
+  size_t num_blocks = padded_n / Int6Block::BLOCK_SIZE;
+  result.int6_blocks.resize(num_blocks);
+
+  if (shape.size() == 2) {
+    size_t M = shape[0];
+    size_t K = shape[1];
+
+    for (size_t r = 0; r < M; ++r) {
+      size_t row_offset = r * K;
+      size_t block_offset = r * blocks_per_row;
+
+      for (size_t b = 0; b < blocks_per_row; ++b) {
+        Int6Block &block = result.int6_blocks[block_offset + b];
+        std::memset(&block, 0, sizeof(Int6Block));
+
+        size_t start_col = b * Int6Block::BLOCK_SIZE;
+        size_t valid_len = 0;
+        if (start_col < K) {
+          valid_len = std::min(Int6Block::BLOCK_SIZE, K - start_col);
+        }
+
+        float absmax = 0.0f;
+        for (size_t i = 0; i < valid_len; ++i) {
+          absmax = std::max(absmax, std::abs(data[row_offset + start_col + i]));
+        }
+
+        block.scale = absmax / 31.0f;
+        float inv_scale = (block.scale > 1e-10f) ? (1.0f / block.scale) : 0.0f;
+
+        for (size_t i = 0; i < Int6Block::BLOCK_SIZE; ++i) {
+          float val = 0.0f;
+          if (i < valid_len) {
+            val = data[row_offset + start_col + i];
+          }
+          int q = static_cast<int>(std::round(val * inv_scale));
+          q = std::max(-31, std::min(31, q));
+          uint8_t uq = static_cast<uint8_t>(q + 32);
+          block.set(i, uq);
+        }
+      }
+    }
+  } else {
+    for (size_t b = 0; b < num_blocks; ++b) {
+      Int6Block &block = result.int6_blocks[b];
+      std::memset(&block, 0, sizeof(Int6Block));
+
+      size_t start_idx = b * Int6Block::BLOCK_SIZE;
+      size_t valid_len = std::min(Int6Block::BLOCK_SIZE, n - start_idx);
+      if (start_idx >= n)
+        valid_len = 0;
+
+      float absmax = 0.0f;
+      for (size_t i = 0; i < valid_len; ++i) {
+        absmax = std::max(absmax, std::abs(data[start_idx + i]));
+      }
+
+      block.scale = absmax / 31.0f;
+      float inv_scale = (block.scale > 1e-10f) ? (1.0f / block.scale) : 0.0f;
+
+      for (size_t i = 0; i < Int6Block::BLOCK_SIZE; ++i) {
+        float val = (i < valid_len) ? data[start_idx + i] : 0.0f;
+        int q = static_cast<int>(std::round(val * inv_scale));
+        q = std::max(-31, std::min(31, q));
+        uint8_t uq = static_cast<uint8_t>(q + 32);
+        block.set(i, uq);
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * ============================================================================
  * Binary (1-Bit) Quantization
  * ============================================================================
  *

@@ -286,6 +286,102 @@ struct Int3Block {
 };
 
 /**
+ * 5-bit quantized weights block
+ *
+ * Symmetric quantization: values in [-16, +15] mapped to [0, 31]
+ */
+struct Int5Block {
+  static constexpr size_t BLOCK_SIZE = 256;
+
+  // 256 weights * 5 bits / 8 = 160 bytes
+  uint8_t data[BLOCK_SIZE * 5 / 8];
+  float scale;
+
+  inline float get(size_t idx) const {
+    size_t bit_idx = idx * 5;
+    size_t byte_idx = bit_idx / 8;
+    size_t bit_offset = bit_idx % 8;
+
+    // Read up to 2 bytes to extract 5 bits
+    uint16_t word = (static_cast<uint16_t>(data[byte_idx]) << 8);
+    if (byte_idx + 1 < sizeof(data)) {
+      word |= data[byte_idx + 1];
+    }
+    uint8_t val = (word >> (11 - bit_offset)) & 0x1F;
+    int8_t signed_val = static_cast<int8_t>(val) - 16; // Center at 0
+    return signed_val * scale;
+  }
+
+  inline void set(size_t idx, uint8_t val) {
+    size_t bit_idx = idx * 5;
+    size_t byte_idx = bit_idx / 8;
+    size_t bit_offset = bit_idx % 8;
+
+    uint16_t mask = ~(0x001F << (11 - bit_offset));
+    uint16_t insert = static_cast<uint16_t>(val & 0x1F) << (11 - bit_offset);
+
+    uint16_t word = (static_cast<uint16_t>(data[byte_idx]) << 8);
+    if (byte_idx + 1 < sizeof(data)) {
+      word |= data[byte_idx + 1];
+    }
+    word = (word & mask) | insert;
+
+    data[byte_idx] = (word >> 8) & 0xFF;
+    if (byte_idx + 1 < sizeof(data)) {
+      data[byte_idx + 1] = word & 0xFF;
+    }
+  }
+};
+
+/**
+ * 6-bit quantized weights block
+ *
+ * Symmetric quantization: values in [-32, +31] mapped to [0, 63]
+ */
+struct Int6Block {
+  static constexpr size_t BLOCK_SIZE = 256;
+
+  // 256 weights * 6 bits / 8 = 192 bytes
+  uint8_t data[BLOCK_SIZE * 6 / 8];
+  float scale;
+
+  inline float get(size_t idx) const {
+    size_t bit_idx = idx * 6;
+    size_t byte_idx = bit_idx / 8;
+    size_t bit_offset = bit_idx % 8;
+
+    // Read up to 2 bytes to extract 6 bits
+    uint16_t word = (static_cast<uint16_t>(data[byte_idx]) << 8);
+    if (byte_idx + 1 < sizeof(data)) {
+      word |= data[byte_idx + 1];
+    }
+    uint8_t val = (word >> (10 - bit_offset)) & 0x3F;
+    int8_t signed_val = static_cast<int8_t>(val) - 32; // Center at 0
+    return signed_val * scale;
+  }
+
+  inline void set(size_t idx, uint8_t val) {
+    size_t bit_idx = idx * 6;
+    size_t byte_idx = bit_idx / 8;
+    size_t bit_offset = bit_idx % 8;
+
+    uint16_t mask = ~(0x003F << (10 - bit_offset));
+    uint16_t insert = static_cast<uint16_t>(val & 0x3F) << (10 - bit_offset);
+
+    uint16_t word = (static_cast<uint16_t>(data[byte_idx]) << 8);
+    if (byte_idx + 1 < sizeof(data)) {
+      word |= data[byte_idx + 1];
+    }
+    word = (word & mask) | insert;
+
+    data[byte_idx] = (word >> 8) & 0xFF;
+    if (byte_idx + 1 < sizeof(data)) {
+      data[byte_idx + 1] = word & 0xFF;
+    }
+  }
+};
+
+/**
  * Binary (1-bit) quantized weights block
  *
  * Weights are {-1, +1}.
@@ -375,12 +471,14 @@ struct PackedTensor {
   std::vector<Int2Block> int2_blocks;     // For 2-bit quantization
   std::vector<Int3Block> int3_blocks;     // For 3-bit quantization
   std::vector<Int4Block> int4_blocks;     // For 4-bit quantization
+  std::vector<Int5Block> int5_blocks;     // For 5-bit quantization
+  std::vector<Int6Block> int6_blocks;     // For 6-bit quantization
   std::vector<BinaryBlock> binary_blocks; // For binary (1-bit)
   std::vector<Int8Block> int8_blocks;     // For Int8 (8-bit)
   std::vector<float> raw_data;
   float global_scale = 1.0f;
   bool is_quantized = true;
-  int quant_bits = 2; // 1=binary, 2=ternary, 4=int4, 8=int8
+  int quant_bits = 2; // 1=binary, 2=ternary, 3, 4, 5, 6, 8
 
   size_t num_elements() const {
     size_t n = 1;

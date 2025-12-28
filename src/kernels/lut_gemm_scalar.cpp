@@ -141,6 +141,14 @@ void lut_linear(const PackedTensor &weight, const float *bias,
         // 3-bit path
         int3_gemv(weight.int3_blocks.data(), weight.int3_blocks.size(),
                   effective_input, curr_output, M, K);
+      } else if (weight.quant_bits == 5 && !weight.int5_blocks.empty()) {
+        // 5-bit path
+        int5_gemv(weight.int5_blocks.data(), weight.int5_blocks.size(),
+                  effective_input, curr_output, M, K);
+      } else if (weight.quant_bits == 6 && !weight.int6_blocks.empty()) {
+        // 6-bit path
+        int6_gemv(weight.int6_blocks.data(), weight.int6_blocks.size(),
+                  effective_input, curr_output, M, K);
       } else {
         // Ternary (1.58-bit) path
         lut_gemv(weight.blocks.data(), weight.blocks.size(), effective_input,
@@ -334,6 +342,84 @@ void int3_gemv_scalar(const Int3Block *blocks, size_t num_blocks,
 
       for (size_t i = 0; i < Int3Block::BLOCK_SIZE; ++i) {
         block_sum += block.get(i) * block_input[i] / block_scale;
+      }
+      acc += block_sum * block_scale;
+    }
+    output[row] = acc;
+  }
+}
+
+// ============================================================================
+// Int5 GEMV Scalar Implementation
+// ============================================================================
+
+void int5_gemv_scalar(const Int5Block *blocks, size_t num_blocks,
+                      const float *activations, float *output, size_t M,
+                      size_t K) {
+  const size_t blocks_per_row =
+      (K + Int5Block::BLOCK_SIZE - 1) / Int5Block::BLOCK_SIZE;
+
+  for (size_t row = 0; row < M; ++row) {
+    float acc = 0.0f;
+    const Int5Block *row_blocks = blocks + row * blocks_per_row;
+
+    for (size_t b = 0; b < blocks_per_row; ++b) {
+      const Int5Block &block = row_blocks[b];
+      float block_scale = block.scale;
+      float block_sum = 0.0f;
+      const float *block_input = activations + b * Int5Block::BLOCK_SIZE;
+
+      for (size_t i = 0; i < Int5Block::BLOCK_SIZE; ++i) {
+        // Get quantized value and dequantize
+        size_t bit_idx = i * 5;
+        size_t byte_idx = bit_idx / 8;
+        size_t bit_offset = bit_idx % 8;
+        uint16_t word = (static_cast<uint16_t>(block.data[byte_idx]) << 8);
+        if (byte_idx + 1 < sizeof(block.data)) {
+          word |= block.data[byte_idx + 1];
+        }
+        uint8_t val = (word >> (11 - bit_offset)) & 0x1F;
+        int8_t signed_val = static_cast<int8_t>(val) - 16;
+        block_sum += signed_val * block_input[i];
+      }
+      acc += block_sum * block_scale;
+    }
+    output[row] = acc;
+  }
+}
+
+// ============================================================================
+// Int6 GEMV Scalar Implementation
+// ============================================================================
+
+void int6_gemv_scalar(const Int6Block *blocks, size_t num_blocks,
+                      const float *activations, float *output, size_t M,
+                      size_t K) {
+  const size_t blocks_per_row =
+      (K + Int6Block::BLOCK_SIZE - 1) / Int6Block::BLOCK_SIZE;
+
+  for (size_t row = 0; row < M; ++row) {
+    float acc = 0.0f;
+    const Int6Block *row_blocks = blocks + row * blocks_per_row;
+
+    for (size_t b = 0; b < blocks_per_row; ++b) {
+      const Int6Block &block = row_blocks[b];
+      float block_scale = block.scale;
+      float block_sum = 0.0f;
+      const float *block_input = activations + b * Int6Block::BLOCK_SIZE;
+
+      for (size_t i = 0; i < Int6Block::BLOCK_SIZE; ++i) {
+        // Get quantized value and dequantize
+        size_t bit_idx = i * 6;
+        size_t byte_idx = bit_idx / 8;
+        size_t bit_offset = bit_idx % 8;
+        uint16_t word = (static_cast<uint16_t>(block.data[byte_idx]) << 8);
+        if (byte_idx + 1 < sizeof(block.data)) {
+          word |= block.data[byte_idx + 1];
+        }
+        uint8_t val = (word >> (10 - bit_offset)) & 0x3F;
+        int8_t signed_val = static_cast<int8_t>(val) - 32;
+        block_sum += signed_val * block_input[i];
       }
       acc += block_sum * block_scale;
     }
