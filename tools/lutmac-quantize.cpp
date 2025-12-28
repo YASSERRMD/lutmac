@@ -485,6 +485,8 @@ int main(int argc, char **argv) {
     total_blocks += t.int2_blocks.size();
     total_blocks += t.int3_blocks.size();
     total_blocks += t.int4_blocks.size();
+    total_blocks += t.int5_blocks.size();
+    total_blocks += t.int6_blocks.size();
     total_blocks += t.int8_blocks.size();
     total_blocks += t.binary_blocks.size();
   }
@@ -504,6 +506,10 @@ int main(int argc, char **argv) {
       file_size += t.int3_blocks.size() * sizeof(Int3Block);
     if (!t.int4_blocks.empty())
       file_size += t.int4_blocks.size() * sizeof(Int4Block);
+    if (!t.int5_blocks.empty())
+      file_size += t.int5_blocks.size() * sizeof(Int5Block);
+    if (!t.int6_blocks.empty())
+      file_size += t.int6_blocks.size() * sizeof(Int6Block);
     if (!t.int8_blocks.empty())
       file_size += t.int8_blocks.size() * sizeof(Int8Block);
     if (!t.binary_blocks.empty())

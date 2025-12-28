@@ -183,6 +183,16 @@ bool save_lutmac(const std::string &path, const ModelConfig &config,
         meta << "      \"num_blocks\": " << t.int8_blocks.size() << ",\n";
         meta << "      \"quant_bits\": 8\n";
         stored_bytes = t.int8_blocks.size() * sizeof(Int8Block);
+      } else if (t.quant_bits == 6 && !t.int6_blocks.empty()) {
+        meta << "      \"type\": \"int6\",\n";
+        meta << "      \"num_blocks\": " << t.int6_blocks.size() << ",\n";
+        meta << "      \"quant_bits\": 6\n";
+        stored_bytes = t.int6_blocks.size() * sizeof(Int6Block);
+      } else if (t.quant_bits == 5 && !t.int5_blocks.empty()) {
+        meta << "      \"type\": \"int5\",\n";
+        meta << "      \"num_blocks\": " << t.int5_blocks.size() << ",\n";
+        meta << "      \"quant_bits\": 5\n";
+        stored_bytes = t.int5_blocks.size() * sizeof(Int5Block);
       } else if (t.quant_bits == 4 && !t.int4_blocks.empty()) {
         meta << "      \"type\": \"int4\",\n";
         meta << "      \"num_blocks\": " << t.int4_blocks.size() << ",\n";
@@ -248,6 +258,12 @@ bool save_lutmac(const std::string &path, const ModelConfig &config,
       if (t.quant_bits == 8 && !t.int8_blocks.empty()) {
         file.write(reinterpret_cast<const char *>(t.int8_blocks.data()),
                    t.int8_blocks.size() * sizeof(Int8Block));
+      } else if (t.quant_bits == 6 && !t.int6_blocks.empty()) {
+        file.write(reinterpret_cast<const char *>(t.int6_blocks.data()),
+                   t.int6_blocks.size() * sizeof(Int6Block));
+      } else if (t.quant_bits == 5 && !t.int5_blocks.empty()) {
+        file.write(reinterpret_cast<const char *>(t.int5_blocks.data()),
+                   t.int5_blocks.size() * sizeof(Int5Block));
       } else if (t.quant_bits == 4 && !t.int4_blocks.empty()) {
         file.write(reinterpret_cast<const char *>(t.int4_blocks.data()),
                    t.int4_blocks.size() * sizeof(Int4Block));
@@ -356,6 +372,10 @@ bool load_lutmac(const std::string &path, ModelConfig &config,
     // Check for int4 vs ternary vs binary vs raw
     bool is_int8 =
         (tensor_json.find("\"type\": \"int8\"") != std::string::npos);
+    bool is_int6 =
+        (tensor_json.find("\"type\": \"int6\"") != std::string::npos);
+    bool is_int5 =
+        (tensor_json.find("\"type\": \"int5\"") != std::string::npos);
     bool is_int4 =
         (tensor_json.find("\"type\": \"int4\"") != std::string::npos);
     bool is_int3 =
@@ -388,6 +408,12 @@ bool load_lutmac(const std::string &path, ModelConfig &config,
     if (is_int8) {
       t.is_quantized = true;
       t.int8_blocks.resize(num_blocks);
+    } else if (is_int6) {
+      t.is_quantized = true;
+      t.int6_blocks.resize(num_blocks);
+    } else if (is_int5) {
+      t.is_quantized = true;
+      t.int5_blocks.resize(num_blocks);
     } else if (is_int4) {
       t.is_quantized = true;
       t.int4_blocks.resize(num_blocks);
@@ -438,6 +464,12 @@ bool load_lutmac(const std::string &path, ModelConfig &config,
       if (t.int8_blocks.size() > 0) {
         file.read(reinterpret_cast<char *>(t.int8_blocks.data()),
                   t.int8_blocks.size() * sizeof(Int8Block));
+      } else if (t.int6_blocks.size() > 0) {
+        file.read(reinterpret_cast<char *>(t.int6_blocks.data()),
+                  t.int6_blocks.size() * sizeof(Int6Block));
+      } else if (t.int5_blocks.size() > 0) {
+        file.read(reinterpret_cast<char *>(t.int5_blocks.data()),
+                  t.int5_blocks.size() * sizeof(Int5Block));
       } else if (t.int4_blocks.size() > 0) {
         file.read(reinterpret_cast<char *>(t.int4_blocks.data()),
                   t.int4_blocks.size() * sizeof(Int4Block));
