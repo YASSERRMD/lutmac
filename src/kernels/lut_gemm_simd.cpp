@@ -38,6 +38,68 @@ void lut_gemv_avx2(const BitPlaneBlock *blocks, size_t num_blocks,
                    size_t K) {
   lut_gemv_scalar(blocks, num_blocks, activations, output, M, K);
 }
+
+void int2_gemv_avx2(const Int2Block *blocks, size_t num_blocks,
+                    const float *activations, float *output, size_t M,
+                    size_t K) {
+  int2_gemv_scalar(blocks, num_blocks, activations, output, M, K);
+}
+
+void int3_gemv_avx2(const Int3Block *blocks, size_t num_blocks,
+                    const float *activations, float *output, size_t M,
+                    size_t K) {
+  int3_gemv_scalar(blocks, num_blocks, activations, output, M, K);
+}
+
+void int4_gemv_avx2(const Int4Block *blocks, size_t num_blocks,
+                    const float *activations, float *output, size_t M,
+                    size_t K) {
+  int4_gemv_scalar(blocks, num_blocks, activations, output, M, K);
+}
+
+void int8_gemv_avx2(const Int8Block *blocks, size_t num_blocks,
+                    const float *activations, float *output, size_t M,
+                    size_t K) {
+  int8_gemv_scalar(blocks, num_blocks, activations, output, M, K);
+}
+
+void lut_gemv_binary_avx2(const BinaryBlock *blocks, size_t num_blocks,
+                          const float *activations, float *output, size_t M,
+                          size_t K) {
+  lut_gemv_binary_scalar(blocks, num_blocks, activations, output, M, K);
+}
+#endif
+
+#if defined(LUTMAC_HAS_AVX512) || defined(LUTMAC_AVX512)
+void int2_gemv_avx512(const Int2Block *blocks, size_t num_blocks,
+                      const float *activations, float *output, size_t M,
+                      size_t K) {
+  int2_gemv_scalar(blocks, num_blocks, activations, output, M, K);
+}
+
+void int3_gemv_avx512(const Int3Block *blocks, size_t num_blocks,
+                      const float *activations, float *output, size_t M,
+                      size_t K) {
+  int3_gemv_scalar(blocks, num_blocks, activations, output, M, K);
+}
+
+void int4_gemv_avx512(const Int4Block *blocks, size_t num_blocks,
+                      const float *activations, float *output, size_t M,
+                      size_t K) {
+  int4_gemv_scalar(blocks, num_blocks, activations, output, M, K);
+}
+
+void int8_gemv_avx512(const Int8Block *blocks, size_t num_blocks,
+                      const float *activations, float *output, size_t M,
+                      size_t K) {
+  int8_gemv_scalar(blocks, num_blocks, activations, output, M, K);
+}
+
+void lut_gemv_binary_avx512(const BinaryBlock *blocks, size_t num_blocks,
+                            const float *activations, float *output, size_t M,
+                            size_t K) {
+  lut_gemv_binary_scalar(blocks, num_blocks, activations, output, M, K);
+}
 #endif
 
 #if defined(LUTMAC_HAS_AVX512) || defined(LUTMAC_AVX512)

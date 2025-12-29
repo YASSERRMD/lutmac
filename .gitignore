@@ -21,6 +21,7 @@ models/
 
 # Internal Scripts (Unwanted)
 merge_shards.py
+upload_to_hf.py
 
 # Logs & Temporary
 *.log

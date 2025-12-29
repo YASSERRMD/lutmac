@@ -160,7 +160,11 @@ void lut_gemv_binary_scalar(const BinaryBlock *blocks, size_t num_blocks,
 inline void lut_gemv_binary(const BinaryBlock *blocks, size_t num_blocks,
                             const float *activations, float *output, size_t M,
                             size_t K) {
-#if defined(LUTMAC_HAS_NEON) || defined(LUTMAC_NEON)
+#if defined(LUTMAC_HAS_AVX512) || defined(LUTMAC_AVX512)
+  lut_gemv_binary_avx512(blocks, num_blocks, activations, output, M, K);
+#elif defined(LUTMAC_HAS_AVX2) || defined(LUTMAC_AVX2)
+  lut_gemv_binary_avx2(blocks, num_blocks, activations, output, M, K);
+#elif defined(LUTMAC_HAS_NEON) || defined(LUTMAC_NEON)
   lut_gemv_binary_neon(blocks, num_blocks, activations, output, M, K);
 #else
   lut_gemv_binary_scalar(blocks, num_blocks, activations, output, M, K);
@@ -198,12 +202,23 @@ void int4_gemv_scalar(const Int4Block *blocks, size_t num_blocks,
                       const float *activations, float *output, size_t M,
                       size_t K);
 
-/**
- * Int4 GEMV dispatcher
- */
+#if defined(LUTMAC_HAS_AVX2) || defined(LUTMAC_AVX2)
+void int4_gemv_avx2(const Int4Block *blocks, size_t num_blocks,
+                    const float *activations, float *output, size_t M,
+                    size_t K);
+#endif
+
+#if defined(LUTMAC_HAS_AVX512) || defined(LUTMAC_AVX512)
+void int4_gemv_avx512(const Int4Block *blocks, size_t num_blocks,
+                      const float *activations, float *output, size_t M,
+                      size_t K);
+#endif
+
+#if defined(LUTMAC_HAS_NEON) || defined(LUTMAC_NEON)
 void int4_gemv_neon(const Int4Block *blocks, size_t num_blocks,
                     const float *activations, float *output, size_t M,
                     size_t K);
+#endif
 
 /**
  * Int4 GEMV dispatcher
@@ -211,7 +226,11 @@ void int4_gemv_neon(const Int4Block *blocks, size_t num_blocks,
 inline void int4_gemv(const Int4Block *blocks, size_t num_blocks,
                       const float *activations, float *output, size_t M,
                       size_t K) {
-#if defined(LUTMAC_HAS_NEON) || defined(LUTMAC_NEON)
+#if defined(LUTMAC_HAS_AVX512) || defined(LUTMAC_AVX512)
+  int4_gemv_avx512(blocks, num_blocks, activations, output, M, K);
+#elif defined(LUTMAC_HAS_AVX2) || defined(LUTMAC_AVX2)
+  int4_gemv_avx2(blocks, num_blocks, activations, output, M, K);
+#elif defined(LUTMAC_HAS_NEON) || defined(LUTMAC_NEON)
   int4_gemv_neon(blocks, num_blocks, activations, output, M, K);
 #else
   int4_gemv_scalar(blocks, num_blocks, activations, output, M, K);
@@ -225,12 +244,23 @@ void int2_gemv_scalar(const Int2Block *blocks, size_t num_blocks,
                       const float *activations, float *output, size_t M,
                       size_t K);
 
-/**
- * Int2 GEMV dispatcher
- */
+#if defined(LUTMAC_HAS_AVX2) || defined(LUTMAC_AVX2)
+void int2_gemv_avx2(const Int2Block *blocks, size_t num_blocks,
+                    const float *activations, float *output, size_t M,
+                    size_t K);
+#endif
+
+#if defined(LUTMAC_HAS_AVX512) || defined(LUTMAC_AVX512)
+void int2_gemv_avx512(const Int2Block *blocks, size_t num_blocks,
+                      const float *activations, float *output, size_t M,
+                      size_t K);
+#endif
+
+#if defined(LUTMAC_HAS_NEON) || defined(LUTMAC_NEON)
 void int2_gemv_neon(const Int2Block *blocks, size_t num_blocks,
                     const float *activations, float *output, size_t M,
                     size_t K);
+#endif
 
 /**
  * Int2 GEMV dispatcher
@@ -238,7 +268,11 @@ void int2_gemv_neon(const Int2Block *blocks, size_t num_blocks,
 inline void int2_gemv(const Int2Block *blocks, size_t num_blocks,
                       const float *activations, float *output, size_t M,
                       size_t K) {
-#if defined(LUTMAC_HAS_NEON) || defined(LUTMAC_NEON)
+#if defined(LUTMAC_HAS_AVX512) || defined(LUTMAC_AVX512)
+  int2_gemv_avx512(blocks, num_blocks, activations, output, M, K);
+#elif defined(LUTMAC_HAS_AVX2) || defined(LUTMAC_AVX2)
+  int2_gemv_avx2(blocks, num_blocks, activations, output, M, K);
+#elif defined(LUTMAC_HAS_NEON) || defined(LUTMAC_NEON)
   int2_gemv_neon(blocks, num_blocks, activations, output, M, K);
 #else
   int2_gemv_scalar(blocks, num_blocks, activations, output, M, K);
@@ -252,12 +286,23 @@ void int3_gemv_scalar(const Int3Block *blocks, size_t num_blocks,
                       const float *activations, float *output, size_t M,
                       size_t K);
 
-/**
- * Int3 GEMV dispatcher
- */
+#if defined(LUTMAC_HAS_AVX2) || defined(LUTMAC_AVX2)
+void int3_gemv_avx2(const Int3Block *blocks, size_t num_blocks,
+                    const float *activations, float *output, size_t M,
+                    size_t K);
+#endif
+
+#if defined(LUTMAC_HAS_AVX512) || defined(LUTMAC_AVX512)
+void int3_gemv_avx512(const Int3Block *blocks, size_t num_blocks,
+                      const float *activations, float *output, size_t M,
+                      size_t K);
+#endif
+
+#if defined(LUTMAC_HAS_NEON) || defined(LUTMAC_NEON)
 void int3_gemv_neon(const Int3Block *blocks, size_t num_blocks,
                     const float *activations, float *output, size_t M,
                     size_t K);
+#endif
 
 /**
  * Int3 GEMV dispatcher
@@ -265,7 +310,11 @@ void int3_gemv_neon(const Int3Block *blocks, size_t num_blocks,
 inline void int3_gemv(const Int3Block *blocks, size_t num_blocks,
                       const float *activations, float *output, size_t M,
                       size_t K) {
-#if defined(LUTMAC_HAS_NEON) || defined(LUTMAC_NEON)
+#if defined(LUTMAC_HAS_AVX512) || defined(LUTMAC_AVX512)
+  int3_gemv_avx512(blocks, num_blocks, activations, output, M, K);
+#elif defined(LUTMAC_HAS_AVX2) || defined(LUTMAC_AVX2)
+  int3_gemv_avx2(blocks, num_blocks, activations, output, M, K);
+#elif defined(LUTMAC_HAS_NEON) || defined(LUTMAC_NEON)
   int3_gemv_neon(blocks, num_blocks, activations, output, M, K);
 #else
   int3_gemv_scalar(blocks, num_blocks, activations, output, M, K);
@@ -311,12 +360,23 @@ void int8_gemv_scalar(const Int8Block *blocks, size_t num_blocks,
                       const float *activations, float *output, size_t M,
                       size_t K);
 
-/**
- * Int8 GEMV dispatcher
- */
+#if defined(LUTMAC_HAS_AVX2) || defined(LUTMAC_AVX2)
+void int8_gemv_avx2(const Int8Block *blocks, size_t num_blocks,
+                    const float *activations, float *output, size_t M,
+                    size_t K);
+#endif
+
+#if defined(LUTMAC_HAS_AVX512) || defined(LUTMAC_AVX512)
+void int8_gemv_avx512(const Int8Block *blocks, size_t num_blocks,
+                      const float *activations, float *output, size_t M,
+                      size_t K);
+#endif
+
+#if defined(LUTMAC_HAS_NEON) || defined(LUTMAC_NEON)
 void int8_gemv_neon(const Int8Block *blocks, size_t num_blocks,
                     const float *activations, float *output, size_t M,
                     size_t K);
+#endif
 
 /**
  * Int8 GEMV dispatcher
@@ -324,7 +384,11 @@ void int8_gemv_neon(const Int8Block *blocks, size_t num_blocks,
 inline void int8_gemv(const Int8Block *blocks, size_t num_blocks,
                       const float *activations, float *output, size_t M,
                       size_t K) {
-#if defined(LUTMAC_HAS_NEON) || defined(LUTMAC_NEON)
+#if defined(LUTMAC_HAS_AVX512) || defined(LUTMAC_AVX512)
+  int8_gemv_avx512(blocks, num_blocks, activations, output, M, K);
+#elif defined(LUTMAC_HAS_AVX2) || defined(LUTMAC_AVX2)
+  int8_gemv_avx2(blocks, num_blocks, activations, output, M, K);
+#elif defined(LUTMAC_HAS_NEON) || defined(LUTMAC_NEON)
   int8_gemv_neon(blocks, num_blocks, activations, output, M, K);
 #else
   int8_gemv_scalar(blocks, num_blocks, activations, output, M, K);
