@@ -154,6 +154,18 @@ void lut_gemv_binary_scalar(const BinaryBlock *blocks, size_t num_blocks,
                             const float *activations, float *output, size_t M,
                             size_t K);
 
+#if defined(LUTMAC_HAS_AVX2) || defined(LUTMAC_AVX2)
+void lut_gemv_binary_avx2(const BinaryBlock *blocks, size_t num_blocks,
+                          const float *activations, float *output, size_t M,
+                          size_t K);
+#endif
+
+#if defined(LUTMAC_HAS_AVX512) || defined(LUTMAC_AVX512)
+void lut_gemv_binary_avx512(const BinaryBlock *blocks, size_t num_blocks,
+                            const float *activations, float *output, size_t M,
+                            size_t K);
+#endif
+
 /**
  * Binary GEMV dispatcher
  */
