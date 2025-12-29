@@ -4,6 +4,8 @@
 
 #if defined(__ARM_NEON) || defined(__ARM_NEON__)
 #include <arm_neon.h>
+#elif defined(__AVX2__)
+#include <immintrin.h>
 #endif
 
 namespace lutmac {
@@ -41,6 +43,16 @@ void fwht_256(float *data) {
 
         vst1q_f32(data + i + j, vsum);
         vst1q_f32(data + i + h + j, vdiff);
+#elif defined(__AVX2__)
+        __m256 vm1 = _mm256_loadu_ps(data + i + j);
+        __m256 vp1 = _mm256_loadu_ps(data + i + h + j);
+
+        __m256 vsum1 = _mm256_add_ps(vm1, vp1);
+        __m256 vdiff1 = _mm256_sub_ps(vm1, vp1);
+
+        _mm256_storeu_ps(data + i + j, vsum1);
+        _mm256_storeu_ps(data + i + h + j, vdiff1);
+        j += 4; // Advance extra 4 for AVX2 (processes 8 total)
 #else
         // Fallback scalar within blocks
         for (size_t k = 0; k < 4; ++k) {
@@ -72,6 +84,12 @@ void fwht_256(float *data) {
   float32x4_t vscale = vdupq_n_f32(inv_scale);
   for (size_t i = 0; i < 256; i += 4) {
     vst1q_f32(data + i, vmulq_f32(vld1q_f32(data + i), vscale));
+  }
+#elif defined(__AVX2__)
+  __m256 vscale_avx = _mm256_set1_ps(inv_scale);
+  for (size_t i = 0; i < 256; i += 8) {
+    _mm256_storeu_ps(data + i,
+                     _mm256_mul_ps(_mm256_loadu_ps(data + i), vscale_avx));
   }
 #else
   for (size_t i = 0; i < 256; ++i) {

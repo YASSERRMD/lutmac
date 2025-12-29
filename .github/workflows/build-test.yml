@@ -1,0 +1,30 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, feature/hadamard-rrq-multi-arch ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure CMake
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DLUTMAC_BUILD_TESTS=ON
+
+    - name: Build
+      run: cmake --build build --config Release -j $(nproc 2>/dev/null || sysctl -n hw.ncpu)
+
+    - name: Run Tests
+      run: |
+        cd build
+        ctest --output-on-failure

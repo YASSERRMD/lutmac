@@ -3,9 +3,14 @@
 // Based on research: reducing 81 ternary combinations to 16 binary lookups
 
 #include "lutmac/thread_pool.hpp"
-#include <arm_neon.h>
 #include <cstdint>
 #include <cstring>
+
+#if defined(__ARM_NEON) || defined(__ARM_NEON__)
+#include <arm_neon.h>
+#elif defined(__AVX2__) || defined(__AVX512F__)
+#include <immintrin.h>
+#endif
 
 namespace lutmac {
 
@@ -128,6 +133,7 @@ void tmac_int4_gemv(const uint8_t *packed_weights, const float *scales,
   ThreadPool::instance().parallel_for(0, M, [&](size_t r) {
     const uint8_t *row_weights = packed_weights + r * bytes_per_row;
 
+#if defined(__ARM_NEON) || defined(__ARM_NEON__)
     float32x4_t acc0 = vdupq_n_f32(0.0f);
     float32x4_t acc1 = vdupq_n_f32(0.0f);
 
@@ -166,8 +172,13 @@ void tmac_int4_gemv(const uint8_t *packed_weights, const float *scales,
       acc1 = vfmaq_f32(acc1, vcvtq_f32_s32(vmovl_s16(vget_high_s16(w_hi))), a3);
     }
 
-    // Handle remainder
     float sum = vaddvq_f32(vaddq_f32(acc0, acc1));
+#else
+    size_t k = 0;
+    float sum = 0.0f;
+#endif
+
+    // Handle remainder (or full row if no SIMD)
     for (; k < K; k += 2) {
       uint8_t packed_byte = row_weights[k / 2];
       int8_t w0 = static_cast<int8_t>(packed_byte & 0x0F) - 8;
